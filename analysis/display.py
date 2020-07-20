@@ -112,7 +112,7 @@ class DisplayResults:
 		for i in os.listdir():
 			if 'png' in i:
 				if self.pcap in i:
-					table += "\n<h2>Interactiveness of connection</h2>\n"
+					#table += "\n<h2>Interactiveness of connection</h2>\n"
 					image = i
 					table += "<img src=" + image +">\n"
 		table += "<h2><a href="+"images.html"+" target ="+"_blank"+">VISUALIZE DATA TRANSFER</a></h2>\n"

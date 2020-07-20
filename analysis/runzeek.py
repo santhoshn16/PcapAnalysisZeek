@@ -30,6 +30,8 @@ class RunZeek:
 		self.cliipaddr=list()
 		self.services=list()
 		self.Metrics=list()
+		self.avgsize=list()
+		self.avginterval=list()
 
 	def run(self):
 		try:
@@ -114,6 +116,14 @@ class RunZeek:
 				if j.split()[0] == i :
 					timestamp.append(float(j.split(' ')[4]))  
 
+			#avergae packet size
+			self.avgsize.append(sum(length)/self.tpc[self.uid.index(i)])
+			#avergae of packet intervals
+			t=0
+			for i5 in range(len(timestamp)-2):
+				t+=timestamp[i5+1]-timestamp[i5]
+			self.avginterval.append(t/len(timestamp))	
+
 			#calculating T 
 			self.spc.append(small)
 			gap = 0
@@ -191,15 +201,42 @@ class RunZeek:
 			plt.legend(["Bytes Transmitted", "Bytes Received"])
 			plt.savefig('Images/{}.png'.format(i),bbox_inches='tight',dpi=100)
 			#plt.show()
+			#plt.clf()
+			#plt.hist(length,bins=100)
+			#plt.savefig('Hist/hist{}_{}.png'.format(self.uid.index(i),self.pcap))
 
+		#interactiveness graph
+		temp=[*range(1,len(self.uid)+1,1)]
 		for i in range(len(self.uid)):
 			self.Metrics.append((self.Alpha[i]+self.T[i])/2) 
-		fig=plt.figure()
-		plt.axis([0,len(self.uid)-1,0.2,1])
-		plt.plot(self.Metrics,'bo',linestyle='dashed')
+		fig=plt.figure(figsize=(19.20,10.80))
+		plt.axis([1,len(self.uid),0.2,1])
+		plt.plot(temp,self.Metrics,'bo',linestyle='dashed')
+		plt.xticks(temp,temp)
 		plt.xlabel('Connections')
 		plt.ylabel('Avg of Metrics')
+		plt.title('Interactiveness of connections')
 		plt.savefig('{}.png'.format(self.pcap))
+
+		#avgpacketsize graph
+		fig=plt.figure(figsize=(19.20,10.80))
+		plt.axis([1,len(self.uid),0,1500])
+		plt.bar(temp,self.avgsize,width=0.2)
+		plt.xticks(temp,temp)
+		plt.xlabel('Avg Packet Size')
+		plt.ylabel('Connections')
+		plt.title('Connections vs Avg packet size')
+		plt.savefig('avgsize_{}.png'.format(self.pcap))
+
+		#avgintervalbetweenpackets
+		fig=plt.figure(figsize=(19.20,10.80))
+		plt.axis([1,len(self.uid),0,10])
+		plt.bar(temp,self.avginterval,width=0.2)
+		plt.xticks(temp,temp)
+		plt.xlabel('Avg Packet Interval')
+		plt.ylabel('Connections')
+		plt.title('Connections vs Avg packet interval')
+		plt.savefig('avginterval_{}.png'.format(self.pcap))
 
 
 	

@@ -12,6 +12,7 @@ class GenerateDir:
   				os.system('cp desc.html dir_%s'%(self.pcap_name))
   				os.chdir('dir_%s'%(self.pcap_name))
   				os.mkdir('Images')
+  				os.mkdir('Hist')
 		except OSError:
  			print('Already executed this pcap')
  			option = input('enter \'R\' to re analysis the file\n')
@@ -22,5 +23,6 @@ class GenerateDir:
   				os.system('cp desc.html dir_%s'%(self.pcap_name))
   				os.chdir('dir_%s'%(self.pcap_name))
   				os.mkdir('Images')
+  				os.mkdir('Hist')
  			else:
   				sys.exit(0)		
