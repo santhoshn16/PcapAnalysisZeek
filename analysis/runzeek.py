@@ -89,10 +89,11 @@ class RunZeek:
 
 	def calculatemetrics(self):
 		for i in self.uid:
+			sam = 'F'
+			skip = 0
+			new_gap = 0
 			if i == '':
 				break
-			sor=list()
-			res=list()
 			orlen=list()
 			reslen=list()
 			ortime=list()
@@ -102,19 +103,29 @@ class RunZeek:
 			small=0
 			for j in self.list1:
 				if j.split()[0] == i and j.split()[1] == 'T':
-					sor.append(int(j.split(' ')[2]))
 					orlen.append(int(j.split(' ')[3]))
 					ortime.append(int(float(j.split(' ')[4])))
 				if j.split()[0] == i and j.split()[1] == 'F':
-					res.append(int(j.split(' ')[2]))
 					reslen.append(int(j.split(' ')[3]))
 					restime.append(int(float(j.split(' ')[4])))
-				if j.split()[0] == i and int(j.split()[3]) <=20:
-					small = small + 1
 				if j.split()[0] == i :
-					length.append(int(j.split(' ')[3]))
-				if j.split()[0] == i :
+					skip = skip + 1
 					timestamp.append(float(j.split(' ')[4]))  
+				if skip > 3 :
+					if j.split()[0] == i :
+						length.append(int(j.split(' ')[3]))
+					if j.split()[0] == i and int(j.split()[3]) >20:
+						if sam == 'T':						
+							new_gap += 1
+						sam = 'F'	
+					if j.split()[0] == i and int(j.split()[3]) <=20:
+						sam = 'T'
+						small = small + 1
+			#calculating T
+			self.gapp.append(new_gap)
+			self.spc.append(small+3)
+			pos = self.uid.index(i)
+			self.T.append(float("{:.2f}".format((self.spc[pos]-new_gap-1)/self.tpc[pos])))
 
 			#avergae packet size
 			self.avgsize.append(sum(length)/self.tpc[self.uid.index(i)])
@@ -124,45 +135,17 @@ class RunZeek:
 				t+=timestamp[i5+1]-timestamp[i5]
 			self.avginterval.append(t/len(timestamp))	
 
-			#calculating T 
-			self.spc.append(small)
-			gap = 0
-			c = 0
-			for j in range(len(sor)-1):
-				if(int(sor[j+1])-int(sor[j])) > 1400 :
-				#if sor[j+1] != sor[j]:
-					c = c+ int((int(sor[j+1])-int(sor[j]))/1400)
-					#c = c + 1
-			if len(sor) == 0:
-				num = 0
-			elif len(sor) == 1:
-				num = 0 
-			else: 
-				num = int(sor[len(sor)-1]) - int(sor[1])
-			num = int(num/1400)
-			gap = gap +num- c   
-			if len(res) == 0:
-				num = 0
-			elif len(res) == 1:
-				num = 0 		
-			else: 
-				num = int(res[len(res)-1]) - int(res[1])
-			num = int(num/1400)
-			gap = gap + num
-			self.gapp.append(gap) 
-			pos = self.uid.index(i)
-			self.T.append(float("{:.2f}".format((self.spc[pos]-gap-1)/self.tpc[pos])))
-
+			
 			#calculating Alpha
 			c = 0
 			ct = 0
 			for j in range(len(length)-1) :
-				if length[j] <=20 & length[j+1]<=20 :
+				if length[j] <=20 and length[j+1]<=20 :
 					c = c+1
 					if timestamp[j+1]-timestamp[j] < 2.0 :
 						ct = ct + 1
 			if c==0:
-				self.Alpha.append(1)
+				self.Alpha.append(0)
 			else:
 				self.Alpha.append(float("{:.2f}".format(ct/c)))
 
@@ -201,9 +184,11 @@ class RunZeek:
 			plt.legend(["Bytes Transmitted", "Bytes Received"])
 			plt.savefig('Images/{}.png'.format(i),bbox_inches='tight',dpi=100)
 			#plt.show()
-			#plt.clf()
-			#plt.hist(length,bins=100)
-			#plt.savefig('Hist/hist{}_{}.png'.format(self.uid.index(i),self.pcap))
+			plt.clf()
+			plt.hist(length,bins=50)
+			plt.xlabel('Packet Sizes')
+			plt.ylabel('Frequency of packets')
+			plt.savefig('Hist/hist{}_{}.png'.format(self.uid.index(i),self.pcap))
 
 		#interactiveness graph
 		temp=[*range(1,len(self.uid)+1,1)]
@@ -223,8 +208,8 @@ class RunZeek:
 		plt.axis([1,len(self.uid),0,1500])
 		plt.bar(temp,self.avgsize,width=0.2)
 		plt.xticks(temp,temp)
-		plt.xlabel('Avg Packet Size')
-		plt.ylabel('Connections')
+		plt.xlabel('Connections')
+		plt.ylabel('Avg Packet Size(B)')
 		plt.title('Connections vs Avg packet size')
 		plt.savefig('avgsize_{}.png'.format(self.pcap))
 
@@ -233,8 +218,8 @@ class RunZeek:
 		plt.axis([1,len(self.uid),0,10])
 		plt.bar(temp,self.avginterval,width=0.2)
 		plt.xticks(temp,temp)
-		plt.xlabel('Avg Packet Interval')
-		plt.ylabel('Connections')
+		plt.xlabel('Connections')
+		plt.ylabel('Avg Packet Interval(sec)')
 		plt.title('Connections vs Avg packet interval')
 		plt.savefig('avginterval_{}.png'.format(self.pcap))
 

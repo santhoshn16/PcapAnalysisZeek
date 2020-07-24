@@ -25,6 +25,7 @@ class DisplayResults:
 		self.pcap=rz.pcap
 
 	def generateHtml(self):
+		conn_id = [x+1 for x in range(len(self.uid))]
 		#visualise data transfer
 		os.system('touch images.html')
 		inp = open('images.html','w')
@@ -43,10 +44,10 @@ class DisplayResults:
 		#Analysis Results in Html
 		os.system("touch results")
 		r=open("results","w")
-		str1="Server Client Protocol Service Totalpackets Smallpackets(<20B) Gaps T Received(B) Sent(B) Received/sent Time(Sec) Alpha\n"
+		str1="No.,Server,Client,Protocol,Service,Totalpackets,Smallpackets(<20B),Gaps,T,Received(B),Sent(B),Received/sent,Time(Sec),Alpha\n"
 		r.write(str1)
 		for i in range(len(self.uid)):
-			str1 = str(self.seripaddr[i])+" "+(self.cliipaddr[i])+" "+str(self.protocols[i])+" "+str(self.services[i].strip())+" "+str(self.tpc[i])+" "+str(self.spc[i])+" "+str(self.gapp[i])+" "+str(self.T[i])+" "+str(self.serversent[i])+" "+str(self.clientsent[i])+" "+str(self.ratio[i])+" "+str(self.time[i]+" "+str(self.Alpha[i])+"\n")
+			str1 = str(conn_id[i])+","+str(self.seripaddr[i])+","+(self.cliipaddr[i])+","+str(self.protocols[i])+","+str(self.services[i].strip())+","+str(self.tpc[i])+","+str(self.spc[i])+","+str(self.gapp[i])+","+str(self.T[i])+","+str(self.serversent[i])+","+str(self.clientsent[i])+","+str(self.ratio[i])+","+str(self.time[i]+","+str(self.Alpha[i])+"\n")
 			r.write(str1)
 		r.close()
 
@@ -62,7 +63,7 @@ class DisplayResults:
 		table = table + "<tr>\n"+"<caption><h2>Results based on consider points </h2></caption>\n"+"</tr>\n"
 
 		# Create the table's column headers
-		header = data[0].split(" ")
+		header = data[0].split(",")
 		table += "  <tr>\n"
 		for column in header:
 			table += "    <th>{0}</th>\n".format(column.strip())
@@ -70,7 +71,7 @@ class DisplayResults:
 
 		# Create the table's row data
 		for line in data[1:len(data)-1]:
-			row = line.split(" ")
+			row = line.split(",")
 			table += "  <tr>\n"
 			for column in row:
 				table += "    <td >{0}</td>\n".format(column.strip())
@@ -121,6 +122,7 @@ class DisplayResults:
 		fileout.close()
 		filein.close()
 		#os.system("rm results")
+		os.system('mv results {}.csv'.format(self.pcap))
 
 
 	def displayresults(self):
