@@ -1,10 +1,10 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
+import sys,re
 
 class RunZeek:
-	def __init__(self,pcap_name,zp,zc1,zc2,zc3,zc4):
+	def __init__(self,pcap_name,zp,zc1,zc2,zc3,zc4,zc5):
 		self.pcap=pcap_name
 		#provide zeek root folder
 		self.zeek_path = zp
@@ -12,8 +12,9 @@ class RunZeek:
 		self.zeek_script2 = zc2
 		self.zeek_script3 = zc3
 		self.zeek_script4 = zc4
+		self.zeek_script5 = zc5
 		self.uid=list()
-		self.list1=list()
+		self.nd=dict()
 		self.gapp=list()
 		self.tpc=list()
 		self.bytesexchanged=list()
@@ -35,7 +36,8 @@ class RunZeek:
 
 	def run(self):
 		try:
-			os.system('zeek -C -r %s %s %s %s %s> num.txt'%(self.pcap,self.zeek_script4,self.zeek_script1,self.zeek_script2,self.zeek_script3))
+			os.system('zeek -C -r %s %s %s %s %s %s> num.txt'%(self.pcap,self.zeek_script4,self.zeek_script1,self.zeek_script2,self.zeek_script3,self.zeek_script5))
+			
 		except:
 			print("please set zeek path in starter.py\n")
 			sys.exit(0)
@@ -43,27 +45,30 @@ class RunZeek:
 		os.system("cat connections.txt | awk \'{ print $2\":\"$3}\' > ipsrc.txt")
 		os.system("cat connections.txt | awk \'{ print $4\":\"$5}\' > ipdst.txt")
 		os.system("cat connections.txt | awk \'{ print $7}\' > time.txt")
+		os.system("cat num.txt | awk \'{print $1}\' | sort | uniq > uid.txt")
+
 
 
 	def fill_lists(self):
+		with open('uid.txt','r') as f:
+			data = f.read()
+			data = data.split("\n")
+			for i in data:
+				if i == '':
+					continue
+				self.uid.append(i)
+			print("UID for connections\n",self.uid)
+ 
 		with open('num.txt','r') as f:
 			data = f.read()
-			data = data.split('\n')
-			for i in data:
-				l = i.split(' ')
-				if l[0] == '':
-					break
-				if l[0] not in self.uid:
-					self.uid.append(l[0])
-			print("UID for connections\n",self.uid)
-			for i in self.uid:
-				if i == '':
-					break
-				for j in data:
-					if j.split(' ')[0] == i:
-						self.list1.append(j) 
-			#print(len(list1))
- 
+			data = data.split("\n")
+			for i in range(len(self.uid)):
+				if self.uid[i] == '':
+					continue
+				r = re.compile(r"%s"%self.uid[i])
+				self.nd[self.uid[i]] = list(filter(r.match,data))
+		
+		#print(self.nd)
 		with open('connections.txt','r') as f:
 			data = f.readlines()
 			for i in self.uid:
@@ -90,7 +95,8 @@ class RunZeek:
 	def calculatemetrics(self):
 		for i in self.uid:
 			sam = 'F'
-			skip = 0
+			sam1 = 'F'
+			l=0
 			new_gap = 0
 			if i == '':
 				break
@@ -99,9 +105,11 @@ class RunZeek:
 			ortime=list()
 			restime=list()
 			length=list()
+			lengthforalpha=list()
 			timestamp=list()
+			timestampforalpha=list()
 			small=0
-			for j in self.list1:
+			for j in self.nd[i]:
 				if j.split()[0] == i and j.split()[1] == 'T':
 					orlen.append(int(j.split(' ')[3]))
 					ortime.append(int(float(j.split(' ')[4])))
@@ -109,21 +117,21 @@ class RunZeek:
 					reslen.append(int(j.split(' ')[3]))
 					restime.append(int(float(j.split(' ')[4])))
 				if j.split()[0] == i :
-					skip = skip + 1
-					timestamp.append(float(j.split(' ')[4]))  
-				if skip > 3 :
-					if j.split()[0] == i :
-						length.append(int(j.split(' ')[3]))
-					if j.split()[0] == i and int(j.split()[3]) >20:
+					timestamp.append(float(j.split(' ')[4]))
+					length.append(int(j.split(' ')[3]))
+					if j.split()[1] == 'T':
+						lengthforalpha.append(int(j.split(' ')[3]))
+						timestampforalpha.append(float(j.split(' ')[4]))
+					if int(j.split()[3]) >20:
 						if sam == 'T':						
 							new_gap += 1
 						sam = 'F'	
-					if j.split()[0] == i and int(j.split()[3]) <=20:
+					if int(j.split()[3]) <=20:
 						sam = 'T'
 						small = small + 1
 			#calculating T
 			self.gapp.append(new_gap)
-			self.spc.append(small+3)
+			self.spc.append(small)
 			pos = self.uid.index(i)
 			self.T.append(float("{:.2f}".format((self.spc[pos]-new_gap-1)/self.tpc[pos])))
 
@@ -139,12 +147,14 @@ class RunZeek:
 			#calculating Alpha
 			c = 0
 			ct = 0
-			for j in range(len(length)-1) :
-				if length[j] <=20 and length[j+1]<=20 :
+			for j in range(len(lengthforalpha)-1) :
+				if lengthforalpha[j] <=20 and lengthforalpha[j+1]<=20 :
 					c = c+1
-					if timestamp[j+1]-timestamp[j] < 2.0 :
+					if timestampforalpha[j+1]-timestampforalpha[j] > 0.01 and timestampforalpha[j+1]-timestampforalpha[j] < 2.0 :
 						ct = ct + 1
-			if c==0:
+						print(timestampforalpha[j])
+			print(c,ct,len(lengthforalpha))
+			if c==0 or c==1:
 				self.Alpha.append(0)
 			else:
 				self.Alpha.append(float("{:.2f}".format(ct/c)))

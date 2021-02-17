@@ -5,7 +5,6 @@ class DisplayResults:
 
 	def __init__(self,rz):
 		self.uid=rz.uid
-		self.list1=rz.list1
 		self.gapp=rz.gapp
 		self.tpc=rz.tpc
 		self.bytesexchanged=rz.bytesexchanged
@@ -150,5 +149,6 @@ class DisplayResults:
 			os.system('cat telnet.log')
 		print('success')
 		self.generateHtml()
-		webbrowser.open("result.html")
+		web = webbrowser.get('firefox')
+		web.open("result.html")
 		
