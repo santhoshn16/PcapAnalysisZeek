@@ -27,8 +27,11 @@ local os = c$orig$size;
 local rs = c$resp$size;
 local orr = is_orig;
 local l = len;
-print fmt("%s %s %d %d %f",a,orr,acknum,l,c$duration);
+local flag = flags;
+print fmt("%s %s %d %d %f %s",a,orr,acknum,l,c$duration,flag);
 }
+
+
 
 event zeek_init() &priority=5
 {
@@ -39,6 +42,8 @@ Analyzer::register_for_port(Analyzer::ANALYZER_TELNET,p);
 Analyzer::register_for_port(Analyzer::ANALYZER_LOGIN,p);
 #print fmt("%s",b);
 }
+
+
 
 event login_success(c:connection, user:string, client_user:string, password:string, line:string)
 {
