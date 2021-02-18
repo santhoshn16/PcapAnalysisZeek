@@ -93,6 +93,9 @@ class RunZeek:
 		
 
 	def calculatemetrics(self):
+		f = open('num.txt','r')
+		data = f.read()
+		data = data.split("\n")
 		for i in self.uid:
 			sam = 'F'
 			sam1 = 'F'
@@ -109,6 +112,8 @@ class RunZeek:
 			timestamp=list()
 			timestampforalpha=list()
 			small=0
+			r = re.compile(r"%s"%i)
+			self.nd[i] = list(filter(r.match,data))
 			for j in self.nd[i]:
 				if j.split()[0] == i and j.split()[1] == 'T':
 					orlen.append(int(j.split(' ')[3]))
@@ -233,7 +238,7 @@ class RunZeek:
 		plt.title('Connections vs Avg packet interval')
 		plt.savefig('avginterval_{}.png'.format(self.pcap))
 
-
+		f.close()
 	
 
 
